@@ -17,6 +17,18 @@ class blang_model:
 
 		return f"input: {input_sentence}, generated result would be returned"
 
+	def inference(self, input_sentence):
+
+		return f"input: {input_sentence}, inference result would be returned"
+
+
+	def train_adapter(self):
+		print(f'train {self.base_model} model')
+		if self.adapter:
+			print(f'adapter is {self.adapter}')
+		print('train start')
+
+
 
 def get_model(base_model='bllossom_8b', adapter=None):
 
