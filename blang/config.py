@@ -17,5 +17,5 @@ def get_model_list():
 
 
 
-def get_model_list(base_model_name):
+def get_adapter_list(base_model_name):
 	return saved_model_info['base_models'][base_model_name]['adapter_list']
