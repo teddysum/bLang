@@ -2,10 +2,10 @@
 
 saved_model_info = {
 	"base_models": {
-		'bllossom_8b': {
+		'MLP-KTLim/llama-3-Korean-Bllossom-8B': {
 			"adapter_list": ['summarition', 'chatbot', 'relation_extraction', 'ner', 'santiment_analysis']
 		}, 
-		'llama3_8b': {
+		'MLP-KTLim/llama-3-Korean-Bllossom-70B': {
 			"adapter_list": ['summarition', 'chatbot', 'relation_extraction', 'ner']
 		}
 	}
