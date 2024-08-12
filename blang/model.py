@@ -42,14 +42,14 @@ class blang_model:
 
 		else:
 			# Inference mode: Load the model with vLLM
-			sampling_params = SamplingParams(temperature=model_configuration['temperature'], top_p=model_configuration['top_p'])
+			 self.sampling_params = SamplingParams(temperature=model_configuration['temperature'], top_p=model_configuration['top_p'])
 			if self.adapter_name:
 				# Download the LoRA adapter and initialize the model with LoRA enabled
 				adapter_path = snapshot_download(repo_id=self.adapter_name)
-				self.base_model = LLM(model=self.base_model_name, enable_lora=True, lora_path=adapter_path, sampling_params=sampling_params)
+				self.base_model = LLM(model=self.base_model_name, enable_lora=True, lora_path=adapter_path)
 			else:
 				# Initialize the model without LoRA
-				self.base_model = LLM(model=self.base_model_name, enable_lora=False, sampling_params=sampling_params)
+				self.base_model = LLM(model=self.base_model_name, enable_lora=False)
 
 
 	def generate(self, input_sentence):
@@ -57,8 +57,9 @@ class blang_model:
 			raise ValueError("Generate method should only be used in inference mode.")
 		
 		# Inference logic using the vLLM model
-		result = self.base_model.generate(input_sentence)
+		result = self.base_model.generate(input_sentence, sampling_params=self.sampling_params)
 		return result
+
 
 	def inference(self, input_sentence):
 

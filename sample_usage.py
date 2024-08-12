@@ -9,7 +9,7 @@ blang.get_adapter_list('MLP-KTLim/llama-3-Korean-Bllossom-8B')
 
 # adapter_name = 'summarization'
 
-model = blang.get_model(base_model=model_name, adapter=adapter_name, in_train=False)
+model = blang.get_model(base_model=model_name, is_train=False)
 # 학습용, 추론용(vLLM)
 
 # model.get_suggested_prompt()
