@@ -148,7 +148,7 @@ class blang_model:
 		trainer = Trainer(
 			model=self.base_model,
 			args=training_args,
-			train_dataset=train_dataloader.dataset,
+			train_dataset=train_dataset,
 			tokenizer=self.tokenizer,
 			data_collator=data_collator
 		)
