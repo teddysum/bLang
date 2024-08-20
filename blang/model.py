@@ -15,19 +15,46 @@ model_configuration = {
 	"lora_target_modules": ["q_proj", "v_proj"]
 }
 
+model_max_length = {
+	'MLP-KTLim/llama-3-Korean-Bllossom-8B': 8192
+}
+
 class ModelDataset(Dataset):
-    def __init__(self, data, tokenizer):
+    def __init__(self, data, tokenizer, model_max_length):
         self.data = data
         self.tokenizer = tokenizer
+        self.model_max_length = tokenizer.model_max_length
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
         item = self.data[idx]
-        input_ids = self.tokenizer.encode(item['input'], return_tensors='pt').squeeze()
-        labels = self.tokenizer.encode(item['output'], return_tensors='pt').squeeze()
+
+        # 먼저 입력과 출력을 토큰화하여 길이를 확인
+        input_tokens = self.tokenizer.encode(item['input'], add_special_tokens=False)
+        output_tokens = self.tokenizer.encode(item['output'], add_special_tokens=False)
+
+        # 전체 길이가 model_max_length를 넘지 않도록 조정
+        total_length = len(input_tokens) + len(output_tokens)
+
+        if total_length > self.model_max_length:
+            # 길이 초과 시, 비율에 따라 입력과 출력 시퀀스의 길이를 조정
+            input_max_length = int(self.model_max_length // 2)
+            output_max_length = self.model_max_length - input_max_length
+
+            input_ids = self.tokenizer.encode(item['input'], max_length=input_max_length, truncation=True)
+            labels = self.tokenizer.encode(item['output'], max_length=output_max_length, truncation=True)
+        else:
+            input_ids = input_tokens
+            labels = output_tokens
+
+        # Padding 및 Tensor 변환
+        input_ids = self.tokenizer.pad({'input_ids': input_ids}, padding='max_length', max_length=self.model_max_length, return_tensors='pt')['input_ids'].squeeze()
+        labels = self.tokenizer.pad({'input_ids': labels}, padding='max_length', max_length=self.model_max_length, return_tensors='pt')['input_ids'].squeeze()
+
         return {'input_ids': input_ids, 'labels': labels}
+
 
 class blang_model:
 	def __init__(self, base_model, adapter, is_train, use_streaming):
