@@ -34,3 +34,28 @@ base 모델 목록 확인
 ```
 blang.get_model_list()
 ```
+
+모델 load
+```
+model = blang.get_model(base_model=model_name, is_train=False)
+```
+
+추론
+```
+print(model.generate('안녕하세요'))
+```
+
+학습 - 데이터 load
+```
+data_1 = blang.read_data('data_path_1')
+data_2 = blang.read_data('data_path_2')
+all_data = blang.merge_data(data_1, data2)
+print(blang.get_suggested_prompt_type())
+train_data = blang.data_to_prompt(all_data, prompt_type='translation')
+```
+
+학습 - 모델 학습
+```
+model.train_adapter(train_data, save_path='./')
+```
+
