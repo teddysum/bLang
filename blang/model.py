@@ -20,7 +20,7 @@ model_max_length = {
 }
 
 class ModelDataset(Dataset):
-    def __init__(self, data, tokenizer, model_max_length):
+    def __init__(self, data, tokenizer):
         self.data = data
         self.tokenizer = tokenizer
         self.model_max_length = tokenizer.model_max_length
@@ -31,29 +31,28 @@ class ModelDataset(Dataset):
     def __getitem__(self, idx):
         item = self.data[idx]
 
-        # 먼저 입력과 출력을 토큰화하여 길이를 확인
-        input_tokens = self.tokenizer.encode(item['input'], add_special_tokens=False)
-        output_tokens = self.tokenizer.encode(item['output'], add_special_tokens=False)
+        # 입력 시퀀스와 출력 시퀀스를 토큰화
+        inputs = self.tokenizer(
+            item['input'],
+            max_length=self.model_max_length // 2,  # 입력과 출력의 최대 길이를 반으로 나누어 설정
+            padding='max_length',
+            truncation=True,
+            return_tensors='pt'
+        )
+        labels = self.tokenizer(
+            item['output'],
+            max_length=self.model_max_length // 2,
+            padding='max_length',
+            truncation=True,
+            return_tensors='pt'
+        )
 
-        # 전체 길이가 model_max_length를 넘지 않도록 조정
-        total_length = len(input_tokens) + len(output_tokens)
-
-        if total_length > self.model_max_length:
-            # 길이 초과 시, 비율에 따라 입력과 출력 시퀀스의 길이를 조정
-            input_max_length = int(self.model_max_length // 2)
-            output_max_length = self.model_max_length - input_max_length
-
-            input_ids = self.tokenizer.encode(item['input'], max_length=input_max_length, truncation=True)
-            labels = self.tokenizer.encode(item['output'], max_length=output_max_length, truncation=True)
-        else:
-            input_ids = input_tokens
-            labels = output_tokens
-
-        # Padding 및 Tensor 변환
-        input_ids = self.tokenizer.pad({'input_ids': input_ids}, padding='max_length', max_length=self.model_max_length, return_tensors='pt')['input_ids'].squeeze()
-        labels = self.tokenizer.pad({'input_ids': labels}, padding='max_length', max_length=self.model_max_length, return_tensors='pt')['input_ids'].squeeze()
-
-        return {'input_ids': input_ids, 'labels': labels}
+        # 텐서의 첫 번째 차원을 제거하여 (batch_size, seq_len) 형식으로 맞춤
+        return {
+            'input_ids': inputs['input_ids'].squeeze(),
+            'attention_mask': inputs['attention_mask'].squeeze(),
+            'labels': labels['input_ids'].squeeze()
+        }
 
 
 class blang_model:
@@ -132,17 +131,26 @@ class blang_model:
 			logging_steps=10,
 			save_steps=1000,
 			save_total_limit=3,
+			shuffle=True
 		)
 		
 		train_dataset = ModelDataset(train_data, self.tokenizer)
-		train_dataloader = DataLoader(train_dataset, batch_size=training_args.per_device_train_batch_size, shuffle=True)
+
+		data_collator = DataCollatorForSeq2Seq(
+	        tokenizer=self.tokenizer,
+	        model=self.base_model,
+	        padding=True,  # 패딩을 활성화하여 최대 길이로 맞춤
+	        max_length=self.tokenizer.model_max_length,
+	        truncation=True  # 입력과 출력 시퀀스가 최대 길이를 초과하지 않도록 자름
+	    )
 
 		# Initialize Trainer
 		trainer = Trainer(
 			model=self.base_model,
 			args=training_args,
 			train_dataset=train_dataloader.dataset,
-			tokenizer=self.tokenizer
+			tokenizer=self.tokenizer,
+			data_collator=data_collator
 		)
 
 		# Train the model with LoRA layers
