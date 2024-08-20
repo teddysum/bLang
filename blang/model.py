@@ -4,7 +4,7 @@ from vllm import LLM, SamplingParams
 from vllm.lora.request import LoRARequest
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from torch.utils.data import Dataset, DataLoader
-
+import torch
 
 model_configuration = {
     "temperature": 0.8, 
