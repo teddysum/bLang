@@ -37,8 +37,8 @@ class ModelDataset(Dataset):
     def __init__(self, data, tokenizer):
         self.data = data
         self.tokenizer = tokenizer
-        self.model_max_length = tokenizer.model_max_length
-
+        self.model_max_length = 4096
+        print(tokenizer.model_max_length)
     def __len__(self):
         return len(self.data)
 
