@@ -8,7 +8,7 @@ bLang은 Teddysum에서 개발한 LLM 활용 도구 입니다.
 # 설치
 
 ### huggingface, pytorch 등 llm 개발환경 구성
-#### docker를 이용한 설치
+#### docker를 이용한 설치(아직 미구현)
    ```
    docker pull blang
    ```
