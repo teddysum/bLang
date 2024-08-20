@@ -32,7 +32,12 @@ conda를 이용한 설이
 
 base 모델 목록 확인
 ```
-blang.get_model_list()
+print(blang.get_model_list())
+```
+
+adapter 모델 목록 확인
+```
+print(blang.get_adapter_list('MLP-KTLim/llama-3-Korean-Bllossom-8B'))
 ```
 
 모델 load
@@ -56,6 +61,6 @@ train_data = blang.data_to_prompt(all_data, prompt_type='translation')
 
 학습 - 모델 학습
 ```
-model.train_adapter(train_data, save_path='./')
+model.train_adapter(train_data, save_path='./models')
 ```
 
