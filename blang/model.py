@@ -163,9 +163,7 @@ class blang_model:
         data_collator = DataCollatorForSeq2Seq(
             tokenizer=self.tokenizer,
             model=self.base_model,
-            padding=True,  # 패딩을 활성화하여 최대 길이로 맞춤
-            max_length=self.tokenizer.model_max_length,
-            truncation=True  # 입력과 출력 시퀀스가 최대 길이를 초과하지 않도록 자름
+            padding=True,
         )
 
         # Initialize Trainer
