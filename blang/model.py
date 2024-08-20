@@ -31,7 +31,7 @@ class ModelDataset(Dataset):
     def __getitem__(self, idx):
         item = self.data[idx]
 
-        # 입력 시퀀스와 출력 시퀀스를 토큰화
+        # 입력 시퀀스와 출력 시퀀스를 토큰화하고 패딩 및 트렁케이션 적용
         inputs = self.tokenizer(
             item['input'],
             max_length=self.model_max_length // 2,  # 입력과 출력의 최대 길이를 반으로 나누어 설정
@@ -47,11 +47,10 @@ class ModelDataset(Dataset):
             return_tensors='pt'
         )
 
-        # 텐서의 첫 번째 차원을 제거하여 (batch_size, seq_len) 형식으로 맞춤
         return {
-            'input_ids': inputs['input_ids'].squeeze(),
-            'attention_mask': inputs['attention_mask'].squeeze(),
-            'labels': labels['input_ids'].squeeze()
+            'input_ids': inputs['input_ids'].squeeze(0),  # 첫 번째 차원 제거
+            'attention_mask': inputs['attention_mask'].squeeze(0),  # 첫 번째 차원 제거
+            'labels': labels['input_ids'].squeeze(0)  # 첫 번째 차원 제거
         }
 
 
@@ -71,8 +70,12 @@ class blang_model:
 			self.tokenizer = AutoTokenizer.from_pretrained(self.base_model_name)
 			self.base_model = AutoModelForCausalLM.from_pretrained(
 				self.base_model_name,
+        		torch_dtype=torch.bfloat16,
 				device_map="auto"
 			)
+
+		    self.tokenizer.pad_token = tokenizer.eos_token
+
 
 			# LoRA configuration
 			lora_config = LoraConfig(
@@ -135,6 +138,8 @@ class blang_model:
 		)
 		
 		train_dataset = ModelDataset(train_data, self.tokenizer)
+
+		print(train_dataset)
 
 		data_collator = DataCollatorForSeq2Seq(
 	        tokenizer=self.tokenizer,
