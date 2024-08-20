@@ -12,7 +12,16 @@ model_configuration = {
     "lora_rank": 16,
     "lora_alpha": 32,
     "lora_dropout": 0.1,
-    "lora_target_modules": ["q_proj", "v_proj"]
+    "lora_target_modules": ["q_proj", "v_proj"],
+    "learning_rate": 2e-5,
+    "gradient_accumulation_steps": 1,
+    "warmup_steps": 0,
+    "num_train_epochs": 3,
+    "per_device_train_batch_size": 4,
+    "save_steps": 1000,
+    "logging_steps": 10,
+    "save_total_limit": 3,
+    "weight_decay":0.1,
 }
 
 model_max_length = {
@@ -125,16 +134,21 @@ class blang_model:
 
         print(f'Training {self.base_model_name} model with LoRA layers.')
 
-        # Set up training arguments
         training_args = TrainingArguments(
             output_dir=save_path,
-            per_device_train_batch_size=4,
-            num_train_epochs=3,
+            per_device_train_batch_size=model_configuration["per_device_train_batch_size"],
+            num_train_epochs=model_configuration["num_train_epochs"],
             logging_dir='./logs',
-            logging_steps=10,
-            save_steps=1000,
-            save_total_limit=3,
-            shuffle=True
+            logging_steps=model_configuration["logging_steps"],
+            save_steps=model_configuration["save_steps"],
+            save_total_limit=model_configuration["save_total_limit"],
+            learning_rate=model_configuration["learning_rate"],  # 학습률 설정
+            gradient_accumulation_steps=model_configuration["gradient_accumulation_steps"],  # 그래디언트 누적 단계 설정
+            warmup_steps=model_configuration["warmup_steps"],  # 워밍업 단계 설정
+            weight_decay=model_configuration["weight_decay"],
+            evaluation_strategy="no",  # 필요시 평가 전략 추가
+            save_strategy="steps",  # 모델 저장 전략
+            report_to="none"  # 필요시 wandb, tensorboard 등을 설정
         )
         
         train_dataset = ModelDataset(train_data, self.tokenizer)
