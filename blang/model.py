@@ -3,15 +3,34 @@ from huggingface_hub import snapshot_download
 from vllm import LLM, SamplingParams
 from vllm.lora.request import LoRARequest
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from torch.utils.data import Dataset, DataLoader
 
 
 model_configuration = {
 	"temperature": 0.8, 
-	"top_p": 0.95
+	"top_p": 0.95,
+	"lora_rank": 16,
+	"lora_alpha": 32,
+	"lora_dropout": 0.1,
+	"lora_target_modules": ["q_proj", "v_proj"]
 }
 
+class ModelDataset(Dataset):
+    def __init__(self, data, tokenizer):
+        self.data = data
+        self.tokenizer = tokenizer
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        item = self.data[idx]
+        input_ids = self.tokenizer.encode(item['input'], return_tensors='pt').squeeze()
+        labels = self.tokenizer.encode(item['output'], return_tensors='pt').squeeze()
+        return {'input_ids': input_ids, 'labels': labels}
+
 class blang_model:
-	def __init__(self, base_model, adapter, is_train):
+	def __init__(self, base_model, adapter, is_train, use_streaming):
 
 		self.base_model_name = base_model
 		self.adapter_name = adapter
@@ -19,6 +38,7 @@ class blang_model:
 		# model load and merge here
 		self.base_model = None
 		self.is_train = is_train
+		self.use_streaming = use_streaming
 
 		if self.is_train:
 			# Training mode: Load the base model and prepare it for LoRA training
@@ -30,10 +50,10 @@ class blang_model:
 
 			# LoRA configuration
 			lora_config = LoraConfig(
-				r=16,  # Rank of the factorization
-				lora_alpha=32,  # Scaling factor
-				lora_dropout=0.1,  # Dropout for LoRA layers
-				target_modules=["q_proj", "v_proj"]  # Target layers to apply LoRA
+				r=model_configuration['lora_rank'],  # Rank of the factorization
+				lora_alpha=model_configuration['lora_alpha'],  # Scaling factor
+				lora_dropout=model_configuration['lora_dropout'],  # Dropout for LoRA layers
+				target_modules=model_configuration['lora_target_modules']  # Target layers to apply LoRA
 			)
 
 			# Prepare model for k-bit training if necessary and apply LoRA configuration
@@ -55,10 +75,14 @@ class blang_model:
 	def generate(self, input_sentence):
 		if self.is_train:
 			raise ValueError("Generate method should only be used in inference mode.")
-		
-		# Inference logic using the vLLM model
-		result = self.base_model.generate(input_sentence, sampling_params=self.sampling_params)
-		return result
+
+		if self.use_streaming:
+			stream = self.base_model.generate_streaming(input_sentence, sampling_params=self.sampling_params)
+			for chunk in stream:
+				print(chunk)  # 각 스트리밍 결과를 출력합니다.
+		else:
+			result = self.base_model.generate(input_sentence, sampling_params=self.sampling_params)
+			return result
 
 
 	def inference(self, input_sentence):
@@ -66,7 +90,7 @@ class blang_model:
 		return self.generate(input_sentence)
 
 
-	def train_adapter(self, train_data, output_dir):
+	def train_adapter(self, train_data, save_path="./"):
 		if not self.is_train:
 			raise ValueError("Training can only be performed in training mode.")
 
@@ -74,7 +98,7 @@ class blang_model:
 
 		# Set up training arguments
 		training_args = TrainingArguments(
-			output_dir=output_dir,
+			output_dir=save_path,
 			per_device_train_batch_size=4,
 			num_train_epochs=3,
 			logging_dir='./logs',
@@ -83,11 +107,14 @@ class blang_model:
 			save_total_limit=3,
 		)
 		
+		train_dataset = ModelDataset(train_data, self.tokenizer)
+		train_dataloader = DataLoader(train_dataset, batch_size=training_args.per_device_train_batch_size, shuffle=True)
+
 		# Initialize Trainer
 		trainer = Trainer(
 			model=self.base_model,
 			args=training_args,
-			train_dataset=train_data,
+			train_dataset=train_dataloader.dataset,
 			tokenizer=self.tokenizer
 		)
 
@@ -105,13 +132,13 @@ class blang_model:
 			self.tokenizer.save_pretrained(save_path)
 
 
-def get_model(base_model='bllossom_8b', adapter=None, is_train=True):
+def get_model(base_model='MLP-KTLim/llama-3-Korean-Bllossom-8B', adapter=None, is_train=True, use_streaming=False):
 
 	print(f'get model based {base_model}')
 	if adapter:
 		print(f'adapter is {adapter}')
 		print('get merged model')
 
-	model = blang_model(base_model, adapter, is_train)
+	model = blang_model(base_model, adapter, is_train, use_streaming)
 
 	return model

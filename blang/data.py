@@ -4,6 +4,50 @@ import json
 import torch
 from torch.utils.data import Dataset
 
+def read_data(file_path):
+    # JSON 파일을 읽어오는 함수
+    with open(file_path, 'r', encoding='utf-8') as file:
+        data = json.load(file)
+    return data
+
+PROMPT_TEMPLATES = {
+    'translation_paragraph': "아래와 같은 영어 문단을 한국어로 번역해 주세요\n\n영어: {input}\n\n한국어: ",
+    'translation_page': "아래와 같이 긴 영어 페이지 전체를 번역해 주세요:\n\n영어: {input}\n\n한국어: ",
+    'translation_sentence': "아래 문장을 영어에서 한국어로 번역하세요:\n\n영어: {input}\n\n한국어: ",
+}
+
+def get_suggested_prompt_type():
+    return PROMPT_TEMPLATES
+
+
+def data_to_prompt(data, prompt_type='translation_paragraph'):
+    # 데이터 형태를 모델이 학습 가능한 프롬프트 형식으로 변환하는 함수
+    if prompt_type not in PROMPT_TEMPLATES:
+        raise ValueError(f"Unsupported prompt type: {prompt_type}")
+
+    # 해당 prompt_type에 맞는 프롬프트 템플릿 가져오기
+    prompt_template = PROMPT_TEMPLATES[prompt_type]
+    
+    processed_data = []
+    for item in data:
+        if 'input' in item and 'output' in item:
+            input_text = prompt_template.format(input=item['input'])
+            output_text = item['output']
+            processed_data.append({'input': input_text, 'output': output_text})
+        else:
+            raise ValueError("Each data item must contain 'input' and 'output' keys.")
+    
+    return processed_data
+
+def merge_data(*datasets):
+    # 여러 개의 데이터셋을 합치는 함수
+    merged_data = []
+    for dataset in datasets:
+        merged_data.extend(dataset)
+    return merged_data
+
+
+
 
 class CustomDataset(Dataset):
     def __init__(self, fname, tokenizer):

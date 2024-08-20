@@ -15,7 +15,7 @@ model = blang.get_model(base_model=model_name, is_train=False)
 # model.get_suggested_prompt()
 # model.set_prompt()
 
-model.generate('안녕하세요')
+print(model.generate('안녕하세요'))
 # model.inference('안녕하세요')
 
 # model.train_adapter()
