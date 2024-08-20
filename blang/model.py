@@ -74,7 +74,7 @@ class blang_model:
 				device_map="auto"
 			)
 
-		    self.tokenizer.pad_token = tokenizer.eos_token
+		    self.tokenizer.pad_token = self.tokenizer.eos_token
 
 
 			# LoRA configuration
