@@ -106,7 +106,7 @@ class blang_model:
 
         else:
             # Inference mode: Load the model with vLLM
-            self.sampling_params = SamplingParams(temperature=model_configuration['temperature'], top_p=model_configuration['top_p'])
+            self.sampling_params = SamplingParams(temperature=model_configuration['temperature'], top_p=model_configuration['top_p'], max_tokens=2000)
             if self.adapter_name:
                 # Download the LoRA adapter and initialize the model with LoRA enabled
                 try:
