@@ -38,7 +38,7 @@ class ModelDataset(Dataset):
     def __init__(self, data, tokenizer):
         self.data = data
         self.tokenizer = tokenizer
-        self.model_max_length = 4096
+        self.model_max_length = 2048
         print(tokenizer.model_max_length)
     def __len__(self):
         return len(self.data)
@@ -50,14 +50,14 @@ class ModelDataset(Dataset):
         inputs = self.tokenizer(
             item['input'],
             max_length=self.model_max_length // 2,  # 입력과 출력의 최대 길이를 반으로 나누어 설정
-            padding=True,
+            padding='max_length',
             truncation=True,
             return_tensors='pt'
         )
         labels = self.tokenizer(
             item['output'],
             max_length=self.model_max_length // 2,
-            padding=True,
+            padding='max_length',
             truncation=True,
             return_tensors='pt'
         )
