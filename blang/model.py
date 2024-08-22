@@ -24,7 +24,7 @@ model_configuration = {
     "warmup_steps": 0,
     "num_train_epochs": 3,
     "per_device_train_batch_size": 4,
-    "save_steps": 1000,
+    "save_steps": 100,
     "logging_steps": 10,
     "save_total_limit": 3,
     "weight_decay":0.1,
@@ -50,14 +50,14 @@ class ModelDataset(Dataset):
         inputs = self.tokenizer(
             item['input'],
             max_length=self.model_max_length // 2,  # 입력과 출력의 최대 길이를 반으로 나누어 설정
-            padding='max_length',
+            padding=True,
             truncation=True,
             return_tensors='pt'
         )
         labels = self.tokenizer(
             item['output'],
             max_length=self.model_max_length // 2,
-            padding='max_length',
+            padding=True,
             truncation=True,
             return_tensors='pt'
         )
@@ -102,7 +102,7 @@ class blang_model:
             )
 
             # Prepare model for k-bit training if necessary and apply LoRA configuration
-            self.base_model = prepare_model_for_kbit_training(self.base_model)
+            # self.base_model = prepare_model_for_kbit_training(self.base_model)
             self.base_model = get_peft_model(self.base_model, lora_config)
 
         else:
@@ -172,8 +172,7 @@ class blang_model:
 
         data_collator = DataCollatorForSeq2Seq(
             tokenizer=self.tokenizer,
-            model=self.base_model,
-            padding=True,
+            model=self.base_model
         )
 
         # Initialize Trainer
