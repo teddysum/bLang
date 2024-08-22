@@ -8,6 +8,7 @@ from transformers import (
 )
 from huggingface_hub import snapshot_download
 from vllm import LLM, SamplingParams
+from vllm.lora.request import LoRARequest
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from torch.utils.data import Dataset
 
@@ -108,9 +109,11 @@ class blang_model:
             self.sampling_params = SamplingParams(temperature=model_configuration['temperature'], top_p=model_configuration['top_p'])
             if self.adapter_name:
                 # Download the LoRA adapter and initialize the model with LoRA enabled
-                # adapter_path = snapshot_download(repo_id=self.adapter_name)
-                adapter_path  = self.adapter_name
-                self.base_model = LLM(model=self.base_model_name, enable_lora=True, lora_path=adapter_path)
+                try:
+                    adapter_path = snapshot_download(repo_id=self.adapter_name)
+                except:
+                    adapter_path  = self.adapter_name
+                self.base_model = LLM(model=self.base_model_name, enable_lora=True)
             else:
                 # Initialize the model without LoRA
                 self.base_model = LLM(model=self.base_model_name, enable_lora=False)
@@ -125,8 +128,13 @@ class blang_model:
             for chunk in stream:
                 print(chunk)  # 각 스트리밍 결과를 출력합니다.
         else:
-            result = self.base_model.generate(input_sentence, sampling_params=self.sampling_params)
-            return result
+            if self.adapter_name:
+                result = self.base_model.generate(input_sentence, sampling_params=self.sampling_params)
+                return result
+            else:
+                result = self.base_model.generate(input_sentence, sampling_params=self.sampling_params, lora_request=LoRARequest("translate_adapter", 1, sql_lora_path))
+                return result
+            
 
 
     def inference(self, input_sentence):
