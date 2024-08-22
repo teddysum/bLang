@@ -79,6 +79,7 @@ class blang_model:
         self.base_model = None
         self.is_train = is_train
         self.use_streaming = use_streaming
+        self.adapter_path = None
 
         if self.is_train:
             # Training mode: Load the base model and prepare it for LoRA training
@@ -110,9 +111,9 @@ class blang_model:
             if self.adapter_name:
                 # Download the LoRA adapter and initialize the model with LoRA enabled
                 try:
-                    adapter_path = snapshot_download(repo_id=self.adapter_name)
+                    self.adapter_path = snapshot_download(repo_id=self.adapter_name)
                 except:
-                    adapter_path  = self.adapter_name
+                    self.adapter_path  = self.adapter_name
                 self.base_model = LLM(model=self.base_model_name, enable_lora=True)
             else:
                 # Initialize the model without LoRA
@@ -129,7 +130,7 @@ class blang_model:
                 print(chunk)  # 각 스트리밍 결과를 출력합니다.
         else:
             if self.adapter_name:
-                result = self.base_model.generate(input_sentence, sampling_params=self.sampling_params, lora_request=LoRARequest("translate_adapter", 1, sql_lora_path))
+                result = self.base_model.generate(input_sentence, sampling_params=self.sampling_params, lora_request=LoRARequest("translate_adapter", 1, self.adapter_path))
                 return result
             else:
                 result = self.base_model.generate(input_sentence, sampling_params=self.sampling_params)
