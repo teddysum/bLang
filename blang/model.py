@@ -129,10 +129,10 @@ class blang_model:
                 print(chunk)  # 각 스트리밍 결과를 출력합니다.
         else:
             if self.adapter_name:
-                result = self.base_model.generate(input_sentence, sampling_params=self.sampling_params)
+                result = self.base_model.generate(input_sentence, sampling_params=self.sampling_params, lora_request=LoRARequest("translate_adapter", 1, sql_lora_path))
                 return result
             else:
-                result = self.base_model.generate(input_sentence, sampling_params=self.sampling_params, lora_request=LoRARequest("translate_adapter", 1, sql_lora_path))
+                result = self.base_model.generate(input_sentence, sampling_params=self.sampling_params)
                 return result
             
 
