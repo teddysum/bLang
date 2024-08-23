@@ -26,7 +26,7 @@ model_configuration = {
     "per_device_train_batch_size": 4,
     "save_steps": 100,
     "logging_steps": 10,
-    "save_total_limit": 3,
+    "save_total_limit": 20,
     "weight_decay":0.1,
 }
 
@@ -107,7 +107,7 @@ class blang_model:
 
         else:
             # Inference mode: Load the model with vLLM
-            self.sampling_params = SamplingParams(temperature=model_configuration['temperature'], top_p=model_configuration['top_p'], max_tokens=2000)
+            self.sampling_params = SamplingParams(temperature=model_configuration['temperature'], top_p=model_configuration['top_p'], max_tokens=2000, stop_token_id=self.tokenizer.eos_token)
             if self.adapter_name:
                 # Download the LoRA adapter and initialize the model with LoRA enabled
                 try:
