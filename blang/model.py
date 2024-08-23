@@ -109,7 +109,7 @@ class blang_model:
             # Inference mode: Load the model with vLLM
             self.tokenizer = AutoTokenizer.from_pretrained(self.base_model_name)
             print('stop_token_ids: ', self.tokenizer.eos_token)
-            self.sampling_params = SamplingParams(temperature=model_configuration['temperature'], top_p=model_configuration['top_p'], max_tokens=2000, stop_token_ids=[self.tokenizer.eos_token, self.tokenizer.pad_token])
+            self.sampling_params = SamplingParams(temperature=model_configuration['temperature'], top_p=model_configuration['top_p'], max_tokens=2000, stop_token_ids=[0])
             if self.adapter_name:
                 # Download the LoRA adapter and initialize the model with LoRA enabled
                 try:
